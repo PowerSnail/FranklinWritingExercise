@@ -1,9 +1,9 @@
-from typing import Any
-from PyQt5.QtCore import QAbstractTableModel, QMargins, QModelIndex, Qt
-import sqlite3
 import enum
+import sqlite3
+from typing import Any
 
-from PyQt5.QtGui import QFontMetrics, QFontMetricsF
+from PyQt5.QtCore import QAbstractTableModel, QMargins, QModelIndex, Qt
+from PyQt5.QtGui import QFontMetrics
 
 
 @enum.unique
@@ -42,13 +42,9 @@ class ExerciseModel(QAbstractTableModel):
         if self._get_value(column, row) != value:
             self._set_value(column, row, value)
             index = self.createIndex(row, column.value)
-            self.dataChanged.emit(
-                index,
-                index,
-                (Qt.DisplayRole, Qt.SizeHintRole)
-            )
+            self.dataChanged.emit(index, index, (Qt.DisplayRole, Qt.SizeHintRole))
             self._db.commit()
-        
+
     # Override
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         if parent.isValid():
@@ -69,22 +65,6 @@ class ExerciseModel(QAbstractTableModel):
             size = size.grownBy(QMargins(8, 8, 8, 8))
             return size
 
-        # Qt.DecorationRole
-        # Qt.EditRole
-        # Qt.ToolTipRole
-        # Qt.StatusTipRole
-        # Qt.WhatsThisRole
-        # Qt.FontRole
-        # Qt.TextAlignmentRole
-        # Qt.BackgroundRole
-        # Qt.BackgroundColorRole
-        # Qt.ForegroundRole
-        # Qt.TextColorRole
-        # Qt.CheckStateRole
-        # Qt.InitialSortOrderRole
-        # Qt.AccessibleTextRole
-        # Qt.AccessibleDescriptionRole
-        # Qt.UserRole
         return None
 
     # Override
@@ -96,23 +76,7 @@ class ExerciseModel(QAbstractTableModel):
                 return ExerciseColumns(section).name
             else:
                 return str(section + 1)
-        # Qt.DecorationRole
-        # Qt.EditRole
-        # Qt.ToolTipRole
-        # Qt.StatusTipRole
-        # Qt.WhatsThisRole
-        # Qt.SizeHintRole
-        # Qt.FontRole
-        # Qt.TextAlignmentRole
-        # Qt.BackgroundRole
-        # Qt.BackgroundColorRole
-        # Qt.ForegroundRole
-        # Qt.TextColorRole
-        # Qt.CheckStateRole
-        # Qt.InitialSortOrderRole
-        # Qt.AccessibleTextRole
-        # Qt.AccessibleDescriptionRole
-        # Qt.UserRole
+
         return None
 
     # Override

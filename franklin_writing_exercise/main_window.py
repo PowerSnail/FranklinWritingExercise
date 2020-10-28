@@ -1,12 +1,12 @@
-from PyQt5.QtGui import QIcon
-from franklin_writing_exercise.exercise_model import ExerciseColumns, ExerciseModel
-import json
 import pathlib
+import random
 
 import appdirs
-from PyQt5.QtCore import QModelIndex, pyqtSlot as slot
+from PyQt5.QtCore import QModelIndex
+from PyQt5.QtCore import pyqtSlot as slot
 from PyQt5.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QTabBar, QTableView
-import random
+
+from franklin_writing_exercise.exercise_model import ExerciseColumns, ExerciseModel
 
 from . import ui_main_window
 
@@ -99,7 +99,7 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
             "Copy from rewrite?",
             "There are contents in the correction box. Do you want to overwrite it with notes from the previous step?",
             QMessageBox.Yes | QMessageBox.No,
-            self
+            self,
         )
 
     @slot(int)
@@ -229,7 +229,7 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
             or self._question_should_overwrite_correction()
         ):
             self.edit_corrections.setPlainText(self.edit_rewrite.toPlainText())
-        
+
         self.tabbar.setCurrentIndex(2)
 
     def _step_poetry(self):
