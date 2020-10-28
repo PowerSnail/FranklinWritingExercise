@@ -1,7 +1,9 @@
 from typing import Any
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt5.QtCore import QAbstractTableModel, QMargins, QModelIndex, Qt
 import sqlite3
 import enum
+
+from PyQt5.QtGui import QFontMetrics, QFontMetricsF
 
 
 @enum.unique
@@ -39,7 +41,12 @@ class ExerciseModel(QAbstractTableModel):
     def set_data(self, row: int, column: ExerciseColumns, value: str):
         if self._get_value(column, row) != value:
             self._set_value(column, row, value)
-            self.dataChanged.emit(self.createIndex(row, column.value), self.createIndex(row, column.value))
+            index = self.createIndex(row, column.value)
+            self.dataChanged.emit(
+                index,
+                index,
+                (Qt.DisplayRole, Qt.SizeHintRole)
+            )
             self._db.commit()
         
     # Override
@@ -56,13 +63,17 @@ class ExerciseModel(QAbstractTableModel):
     def data(self, index: QModelIndex, role=Qt.DisplayRole) -> Any:
         if role == Qt.DisplayRole:
             return self._get_value(ExerciseColumns(index.column()), index.row())
+        if role == Qt.SizeHintRole:
+            text = self._get_value(ExerciseColumns(index.column()), index.row())
+            size = QFontMetrics(self.parent().font()).boundingRect(text).size()
+            size = size.grownBy(QMargins(8, 8, 8, 8))
+            return size
 
         # Qt.DecorationRole
         # Qt.EditRole
         # Qt.ToolTipRole
         # Qt.StatusTipRole
         # Qt.WhatsThisRole
-        # Qt.SizeHintRole
         # Qt.FontRole
         # Qt.TextAlignmentRole
         # Qt.BackgroundRole

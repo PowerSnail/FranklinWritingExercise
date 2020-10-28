@@ -1,3 +1,4 @@
+from PyQt5.QtGui import QIcon
 from franklin_writing_exercise.exercise_model import ExerciseColumns, ExerciseModel
 import json
 import pathlib
@@ -5,8 +6,7 @@ import pathlib
 import appdirs
 from PyQt5.QtCore import QModelIndex, pyqtSlot as slot
 from PyQt5.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QTabBar, QTableView
-
-from pprint import pprint
+import random
 
 from . import ui_main_window
 
@@ -24,29 +24,40 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
             self._step_to_prose,
             self._step_jumble,
         )
-        
+
         self._editors = (
-            (ExerciseColumns.Author, self.edit_author), 
-            (ExerciseColumns.Source, self.edit_source), 
-            (ExerciseColumns.Original, self.edit_original), 
-            (ExerciseColumns.Notes, self.edit_notes), 
-            (ExerciseColumns.Rewrite, self.edit_rewrite), 
-            (ExerciseColumns.Correction, self.edit_corrections), 
-            (ExerciseColumns.Poetry, self.edit_poetry), 
-            (ExerciseColumns.Prose, self.edit_prose), 
+            (ExerciseColumns.Author, self.edit_author),
+            (ExerciseColumns.Source, self.edit_source),
+            (ExerciseColumns.Original, self.edit_original),
+            (ExerciseColumns.Notes, self.edit_notes),
+            (ExerciseColumns.Rewrite, self.edit_rewrite),
+            (ExerciseColumns.Correction, self.edit_corrections),
+            (ExerciseColumns.Poetry, self.edit_poetry),
+            (ExerciseColumns.Prose, self.edit_prose),
         )
 
         data_dir = pathlib.Path(appdirs.user_data_dir("franklin_writing_exercise"))
         data_dir.mkdir(parents=True, exist_ok=True)
         data_path = data_dir / "exercises.db"
-        self._model = ExerciseModel(str(data_path))
+        self._model = ExerciseModel(str(data_path), parent=self)
         self.table_view.setModel(self._model)
 
-        displayed_columns = {ExerciseColumns.Author, ExerciseColumns.Source, ExerciseColumns.Original}
+        displayed_columns = {
+            ExerciseColumns.Author,
+            ExerciseColumns.Source,
+            ExerciseColumns.Original,
+        }
         for column in (col for col in ExerciseColumns if col not in displayed_columns):
             self.table_view.setColumnHidden(column.value, True)
-        
+
         self.table_view.horizontalHeader().setStretchLastSection(True)
+
+        if self._model.rowCount() == 0:
+            self._on_action_new()
+        self.table_view.clicked.emit(self._model.index(0, 0))
+        self.table_view.adjustSize()
+        self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
+        self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
 
     def setupUi(self, obj):
         super().setupUi(obj)
@@ -58,11 +69,10 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         self.tabbar.addTab("4. As Poetry")
         self.tabbar.addTab("5. Back to Prose")
         self.tabbar.addTab("6. Jumble")
-
         self.tabbar_container.setLayout(QGridLayout())
         self.tabbar_container.layout().addWidget(self.tabbar)
-
         self.tabbar.tabBarClicked.connect(self._on_tabbar_clicked)
+
         self.actionExit.triggered.connect(self.close)
         self.actionRemove.triggered.connect(self._on_action_remove)
         self.actionNew.triggered.connect(self._on_action_new)
@@ -79,7 +89,18 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         self.table_view.setSelectionBehavior(QTableView.SelectRows)
         self.table_view.clicked.connect(self._on_table_view_clicked)
 
-        self._step_take_notes()
+        self.btn_jumble.clicked.connect(self._on_jumble_clicked)
+        self.btn_answer.clicked.connect(self._on_answer_clicked)
+        self.list_widget_jumble.setSpacing(8)
+        self.list_widget_answer.setSpacing(8)
+
+        self._msgbox = QMessageBox(
+            QMessageBox.Question,
+            "Copy from rewrite?",
+            "There are contents in the correction box. Do you want to overwrite it with notes from the previous step?",
+            QMessageBox.Yes | QMessageBox.No,
+            self
+        )
 
     @slot(int)
     def _on_tabbar_clicked(self, index: int):
@@ -87,7 +108,7 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
             self._step_handlers[index]()
         else:
             raise ValueError("Tab index out of ranges")
-    
+
     @slot()
     def _on_action_remove(self):
         selected = self.table_view.currentIndex()
@@ -96,16 +117,24 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
     @slot()
     def _on_action_new(self):
         self._model.insertRow(self._model.rowCount())
+        self.table_view.adjustSize()
+        self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
+        self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
+        self.table_view.clicked.emit(self._model.index(self._model.rowCount() - 1, 0))
 
     @slot(str)
     def _on_edit_author_edited(self, value: str):
         selected = self.table_view.currentIndex().row()
         self._model.set_data(selected, ExerciseColumns.Author, value)
+        self.table_view.adjustSize()
+        self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
 
     @slot(str)
     def _on_edit_source_edited(self, value: str):
         selected = self.table_view.currentIndex().row()
         self._model.set_data(selected, ExerciseColumns.Source, value)
+        self.table_view.adjustSize()
+        self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
 
     @slot()
     def _on_edit_corrections_edited(self):
@@ -142,7 +171,7 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         selected = self.table_view.currentIndex().row()
         value = self.edit_rewrite.toPlainText()
         self._model.set_data(selected, ExerciseColumns.Rewrite, value)
-    
+
     @slot(QModelIndex)
     def _on_table_view_clicked(self, current: QModelIndex):
         if not current.isValid():
@@ -151,20 +180,44 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
                 w.parent().setEnabled(False)
         else:
             data = self._model.get_row(current.row())
-            pprint(data)
             for column, widget in self._editors:
                 widget.setText(data[column.value])
             self._step_take_notes()
-    
+
+    @slot()
+    def _on_jumble_clicked(self):
+        note_lines = self._get_note_as_lines()
+        random.shuffle(note_lines)
+        self.list_widget_jumble.clear()
+        for line in note_lines:
+            self.list_widget_jumble.addItem(line)
+        self.list_widget_answer.setVisible(False)
+
+    @slot()
+    def _on_answer_clicked(self):
+        note_lines = self._get_note_as_lines()
+        self.list_widget_answer.clear()
+        for line in note_lines:
+            self.list_widget_answer.addItem(line)
+        self.list_widget_answer.setVisible(True)
+
+    def _get_note_as_lines(self):
+        note_lines = self.edit_notes.toPlainText().splitlines(keepends=False)
+        note_lines = (l.strip() for l in note_lines)
+        note_lines = [l for l in note_lines if l]
+        return note_lines
+
     def _step_take_notes(self):
         self._toggle_boxes((self.box_meta, self.box_original, self.box_notes))
         self.edit_original.setEnabled(True)
         self.edit_notes.setEnabled(True)
+        self.tabbar.setCurrentIndex(0)
 
     def _step_rewrite(self):
         self._toggle_boxes((self.box_notes, self.box_rewrite))
         self.edit_notes.setDisabled(True)
         self.edit_rewrite.setEnabled(True)
+        self.tabbar.setCurrentIndex(1)
 
     def _step_corrections(self):
         self._toggle_boxes((self.box_original, self.box_corrections))
@@ -176,19 +229,25 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
             or self._question_should_overwrite_correction()
         ):
             self.edit_corrections.setPlainText(self.edit_rewrite.toPlainText())
+        
+        self.tabbar.setCurrentIndex(2)
 
     def _step_poetry(self):
         self._toggle_boxes((self.box_corrections, self.box_poetry))
         self.edit_poetry.setEnabled(True)
         self.edit_corrections.setEnabled(False)
+        self.tabbar.setCurrentIndex(3)
 
     def _step_to_prose(self):
         self._toggle_boxes((self.box_poetry, self.box_prose))
         self.edit_poetry.setEnabled(False)
         self.edit_prose.setEnabled(True)
+        self.tabbar.setCurrentIndex(4)
 
     def _step_jumble(self):
         self._toggle_boxes((self.box_jumble,))
+        self._on_jumble_clicked()
+        self.tabbar.setCurrentIndex(5)
 
     def _toggle_boxes(self, enabled_boxes):
         for widget in (
@@ -207,10 +266,4 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
                 widget.setVisible(False)
 
     def _question_should_overwrite_correction(self):
-        answer = QMessageBox.question(
-            self,
-            "Copy from notes?",
-            "There are contents in the correction box. Do you want to overwrite it with notes from step 2?",
-            QMessageBox.Yes | QMessageBox.No,
-        )
-        return answer == QMessageBox.Yes
+        return (self._msgbox.exec()) == QMessageBox.Yes
