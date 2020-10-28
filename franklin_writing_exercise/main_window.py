@@ -1,12 +1,13 @@
 import pathlib
 import random
+from PyQt5.QtGui import QColor
 
 import appdirs
 from PyQt5.QtCore import QModelIndex, Qt
 from PyQt5.QtCore import pyqtSlot as slot
 from PyQt5.QtWidgets import (
     QCompleter,
-    QGridLayout,
+    QGridLayout, QListWidgetItem,
     QMainWindow,
     QMessageBox,
     QTabBar,
@@ -210,7 +211,10 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         random.shuffle(note_lines)
         self.list_widget_jumble.clear()
         for line in note_lines:
-            self.list_widget_jumble.addItem(line)
+            item = QListWidgetItem(line)
+            color = f"#50{hash(line) & 0xFFFFFF :X}"
+            item.setBackground(QColor(color))
+            self.list_widget_jumble.addItem(item)
         self.list_widget_answer.setVisible(False)
 
     @slot()
@@ -218,7 +222,10 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         note_lines = self._get_note_as_lines()
         self.list_widget_answer.clear()
         for line in note_lines:
-            self.list_widget_answer.addItem(line)
+            item = QListWidgetItem(line)
+            color = f"#50{hash(line) & 0xFFFFFF :X}"
+            item.setBackground(QColor(color))
+            self.list_widget_answer.addItem(item)
         self.list_widget_answer.setVisible(True)
 
     def _get_note_as_lines(self):
