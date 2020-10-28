@@ -2,9 +2,16 @@ import pathlib
 import random
 
 import appdirs
-from PyQt5.QtCore import QModelIndex
+from PyQt5.QtCore import QModelIndex, Qt
 from PyQt5.QtCore import pyqtSlot as slot
-from PyQt5.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QTabBar, QTableView
+from PyQt5.QtWidgets import (
+    QCompleter,
+    QGridLayout,
+    QMainWindow,
+    QMessageBox,
+    QTabBar,
+    QTableView,
+)
 
 from franklin_writing_exercise.exercise_model import ExerciseColumns, ExerciseModel
 
@@ -14,7 +21,12 @@ from . import ui_main_window
 class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi(self)
+        data_dir = pathlib.Path(appdirs.user_data_dir("franklin_writing_exercise"))
+        data_dir.mkdir(parents=True, exist_ok=True)
+        data_path = data_dir / "exercises.db"
+        self._model = ExerciseModel(str(data_path), parent=self)
+        self._author_completer = QCompleter(self._model, self)
+        self._source_completer = QCompleter(self._model, self)
 
         self._step_handlers = (
             self._step_take_notes,
@@ -24,6 +36,11 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
             self._step_to_prose,
             self._step_jumble,
         )
+
+        self.setupUi(self)
+
+    def setupUi(self, obj):
+        super().setupUi(obj)
 
         self._editors = (
             (ExerciseColumns.Author, self.edit_author),
@@ -35,32 +52,6 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
             (ExerciseColumns.Poetry, self.edit_poetry),
             (ExerciseColumns.Prose, self.edit_prose),
         )
-
-        data_dir = pathlib.Path(appdirs.user_data_dir("franklin_writing_exercise"))
-        data_dir.mkdir(parents=True, exist_ok=True)
-        data_path = data_dir / "exercises.db"
-        self._model = ExerciseModel(str(data_path), parent=self)
-        self.table_view.setModel(self._model)
-
-        displayed_columns = {
-            ExerciseColumns.Author,
-            ExerciseColumns.Source,
-            ExerciseColumns.Original,
-        }
-        for column in (col for col in ExerciseColumns if col not in displayed_columns):
-            self.table_view.setColumnHidden(column.value, True)
-
-        self.table_view.horizontalHeader().setStretchLastSection(True)
-
-        if self._model.rowCount() == 0:
-            self._on_action_new()
-        self.table_view.clicked.emit(self._model.index(0, 0))
-        self.table_view.adjustSize()
-        self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
-        self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
-
-    def setupUi(self, obj):
-        super().setupUi(obj)
 
         self.tabbar = QTabBar()
         self.tabbar.addTab("1. Take Notes")
@@ -101,6 +92,35 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
             QMessageBox.Yes | QMessageBox.No,
             self,
         )
+
+        self.table_view.setModel(self._model)
+
+        displayed_columns = {
+            ExerciseColumns.Author,
+            ExerciseColumns.Source,
+            ExerciseColumns.Original,
+        }
+        for column in (col for col in ExerciseColumns if col not in displayed_columns):
+            self.table_view.setColumnHidden(column.value, True)
+
+        self.table_view.horizontalHeader().setStretchLastSection(True)
+
+        if self._model.rowCount() == 0:
+            self._on_action_new()
+        self.table_view.clicked.emit(self._model.index(0, 0))
+        self.table_view.adjustSize()
+        self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
+        self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
+
+        self._author_completer.setCompletionColumn(ExerciseColumns.Author.value)
+        self._author_completer.setCompletionMode(QCompleter.PopupCompletion)
+        self._author_completer.setCompletionRole(Qt.DisplayRole)
+        self._source_completer.setCompletionColumn(ExerciseColumns.Source.value)
+        self._source_completer.setCompletionMode(QCompleter.PopupCompletion)
+        self._source_completer.setCompletionRole(Qt.DisplayRole)
+
+        self.edit_author.setCompleter(self._author_completer)
+        self.edit_source.setCompleter(self._source_completer)
 
     @slot(int)
     def _on_tabbar_clicked(self, index: int):
