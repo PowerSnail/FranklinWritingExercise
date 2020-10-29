@@ -212,10 +212,8 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         self.list_widget_jumble.clear()
         for line in note_lines:
             item = QListWidgetItem(line)
-            color = f"#50{hash(line) & 0xFFFFFF :X}"
-            item.setBackground(QColor(color))
             self.list_widget_jumble.addItem(item)
-        self.list_widget_answer.setVisible(False)
+        self.list_widget_answer.clear()
 
     @slot()
     def _on_answer_clicked(self):
@@ -223,10 +221,12 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         self.list_widget_answer.clear()
         for line in note_lines:
             item = QListWidgetItem(line)
-            color = f"#50{hash(line) & 0xFFFFFF :X}"
-            item.setBackground(QColor(color))
+            item.setBackground(self._random_color(line))
             self.list_widget_answer.addItem(item)
-        self.list_widget_answer.setVisible(True)
+
+        for i in range(len(note_lines)):
+            item = self.list_widget_jumble.item(i)
+            item.setBackground(self._random_color(item.text()))        
 
     def _get_note_as_lines(self):
         note_lines = self.edit_notes.toPlainText().splitlines(keepends=False)
@@ -294,3 +294,11 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
 
     def _question_should_overwrite_correction(self):
         return (self._msgbox.exec()) == QMessageBox.Yes
+
+    @staticmethod
+    def _random_color(lit):
+        hashed = hash(lit)
+        hue = (hashed & 0xFF) / 0xFF
+        sat = ((hashed >> 8) & 0xFF) / 0xFF * 0.8
+        lit = ((hashed >> 16) & 0xFF) / 0xFF * 0.4 + 0.6
+        return QColor.fromHslF(hue, sat, lit)

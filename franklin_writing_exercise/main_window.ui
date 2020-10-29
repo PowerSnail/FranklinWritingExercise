@@ -314,6 +314,9 @@
                    <property name="dragDropMode">
                     <enum>QAbstractItemView::InternalMove</enum>
                    </property>
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::SingleSelection</enum>
+                   </property>
                    <property name="spacing">
                     <number>16</number>
                    </property>
@@ -324,8 +327,14 @@
                  </item>
                  <item>
                   <widget class="QListWidget" name="list_widget_answer">
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::NoSelection</enum>
+                   </property>
                    <property name="spacing">
                     <number>16</number>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
