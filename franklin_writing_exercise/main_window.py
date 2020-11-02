@@ -230,6 +230,7 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         for i in range(len(note_lines)):
             item = self.list_widget_jumble.item(i)
             item.setBackground(self._random_color(item.text()))        
+        self.list_widget_jumble.setCurrentRow(-1)
 
     def _get_note_as_lines(self):
         note_lines = self.edit_notes.toPlainText().splitlines(keepends=False)
