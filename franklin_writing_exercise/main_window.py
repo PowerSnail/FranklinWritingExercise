@@ -109,7 +109,6 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         if self._model.rowCount() == 0:
             self._on_action_new()
         self.table_view.clicked.emit(self._model.index(0, 0))
-        self.table_view.adjustSize()
         self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
         self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
 
@@ -135,26 +134,30 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         selected = self.table_view.currentIndex()
         self._model.removeRow(selected.row())
 
+        current_index = self._model.index(max(0, selected.row() - 1), 0)
+        self.table_view.clicked.emit(current_index)
+        self.table_view.setCurrentIndex(current_index)
+
     @slot()
     def _on_action_new(self):
         self._model.insertRow(self._model.rowCount())
-        self.table_view.adjustSize()
         self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
         self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
-        self.table_view.clicked.emit(self._model.index(self._model.rowCount() - 1, 0))
+
+        current_index = self._model.index(self._model.rowCount() - 1, 0)
+        self.table_view.clicked.emit(current_index)
+        self.table_view.setCurrentIndex(current_index)
 
     @slot(str)
     def _on_edit_author_edited(self, value: str):
         selected = self.table_view.currentIndex().row()
         self._model.set_data(selected, ExerciseColumns.Author, value)
-        self.table_view.adjustSize()
         self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
 
     @slot(str)
     def _on_edit_source_edited(self, value: str):
         selected = self.table_view.currentIndex().row()
         self._model.set_data(selected, ExerciseColumns.Source, value)
-        self.table_view.adjustSize()
         self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
 
     @slot()
