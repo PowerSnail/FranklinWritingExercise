@@ -26,8 +26,9 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         data_dir.mkdir(parents=True, exist_ok=True)
         data_path = data_dir / "exercises.db"
         self._model = ExerciseModel(str(data_path), parent=self)
-        self._author_completer = QCompleter(self._model, self)
-        self._source_completer = QCompleter(self._model, self)
+
+        self._author_completer = QCompleter(ExerciseModel.UniqueColumnModel(self._model, ExerciseColumns.Author), self)
+        self._source_completer = QCompleter(ExerciseModel.UniqueColumnModel(self._model, ExerciseColumns.Source), self)
 
         self._step_handlers = (
             self._step_take_notes,
@@ -69,8 +70,8 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         self.actionRemove.triggered.connect(self._on_action_remove)
         self.actionNew.triggered.connect(self._on_action_new)
 
-        self.edit_author.textEdited.connect(self._on_edit_author_edited)
-        self.edit_source.textEdited.connect(self._on_edit_source_edited)
+        self.edit_author.editingFinished.connect(self._on_edit_author_edited)
+        self.edit_source.editingFinished.connect(self._on_edit_source_edited)
         self.edit_corrections.textChanged.connect(self._on_edit_corrections_edited)
         self.edit_notes.textChanged.connect(self._on_edit_notes_edited)
         self.edit_original.textChanged.connect(self._on_edit_original_edited)
@@ -112,12 +113,12 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
         self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
 
-        self._author_completer.setCompletionColumn(ExerciseColumns.Author.value)
         self._author_completer.setCompletionMode(QCompleter.PopupCompletion)
+        self._author_completer.setCaseSensitivity(Qt.CaseInsensitive)
         self._author_completer.setCompletionRole(Qt.DisplayRole)
-        self._source_completer.setCompletionColumn(ExerciseColumns.Source.value)
         self._source_completer.setCompletionMode(QCompleter.PopupCompletion)
         self._source_completer.setCompletionRole(Qt.DisplayRole)
+        self._source_completer.setCaseSensitivity(Qt.CaseInsensitive)
 
         self.edit_author.setCompleter(self._author_completer)
         self.edit_source.setCompleter(self._source_completer)
@@ -148,16 +149,16 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         self.table_view.clicked.emit(current_index)
         self.table_view.setCurrentIndex(current_index)
 
-    @slot(str)
-    def _on_edit_author_edited(self, value: str):
+    @slot()
+    def _on_edit_author_edited(self):
         selected = self.table_view.currentIndex().row()
-        self._model.set_data(selected, ExerciseColumns.Author, value)
+        self._model.set_data(selected, ExerciseColumns.Author, self.edit_author.text())
         self.table_view.resizeColumnToContents(ExerciseColumns.Author.value)
 
-    @slot(str)
-    def _on_edit_source_edited(self, value: str):
+    @slot()
+    def _on_edit_source_edited(self):
         selected = self.table_view.currentIndex().row()
-        self._model.set_data(selected, ExerciseColumns.Source, value)
+        self._model.set_data(selected, ExerciseColumns.Source, self.edit_source.text())
         self.table_view.resizeColumnToContents(ExerciseColumns.Source.value)
 
     @slot()

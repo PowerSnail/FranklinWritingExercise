@@ -2,7 +2,13 @@ import enum
 import sqlite3
 from typing import Any
 
-from PyQt5.QtCore import QAbstractTableModel, QMargins, QModelIndex, Qt
+from PyQt5.QtCore import (
+    QAbstractListModel,
+    QAbstractTableModel,
+    QMargins,
+    QModelIndex,
+    Qt,
+)
 from PyQt5.QtGui import QFontMetrics
 
 
@@ -111,3 +117,25 @@ class ExerciseModel(QAbstractTableModel):
             (value, row),
         )
         self._db.commit()
+
+    class UniqueColumnModel(QAbstractListModel):
+        def __init__(self, parent_model, column) -> None:
+            super().__init__(parent=parent_model)
+            self._db = parent_model._db
+            self._column = column
+
+        def rowCount(self, parent: QModelIndex) -> int:
+            if parent.isValid():
+                return 0
+            return self._db.execute(
+                f"SELECT COUNT (DISTINCT {self._column.name}) FROM FranklinExercise"
+            ).fetchone()[0]
+
+        def data(self, index: QModelIndex, role: int):
+            if role == Qt.DisplayRole:
+                col = self._column.name
+                return self._db.execute(
+                    f"SELECT T.{col} FROM (SELECT DISTINCT {col} FROM FranklinExercise ORDER BY {col}) AS T LIMIT 1 OFFSET ?",
+                    (index.row(),),
+                ).fetchone()[0]
+            return None
