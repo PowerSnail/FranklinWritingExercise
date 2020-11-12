@@ -1,6 +1,6 @@
-from PyQt5.QtGui import QCursor, QTextBlock, QTextBlockFormat, QTextCursor, QTextFormat
-from PyQt5.QtWidgets import QPlainTextEdit, QTextEdit
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QTextBlockFormat, QTextCursor
+
+from PyQt5.QtWidgets import QTextEdit
 
 
 class TextEdit(QTextEdit):

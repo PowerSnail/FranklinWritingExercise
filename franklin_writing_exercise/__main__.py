@@ -5,7 +5,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
 from franklin_writing_exercise.main_window import MainWindow
-from franklin_writing_exercise import resources  # SIDE EFFECT
+from franklin_writing_exercise import resources  # pylint: disable=unused-import
 
 
 def run():

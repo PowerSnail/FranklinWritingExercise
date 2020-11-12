@@ -11,6 +11,8 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtGui import QFontMetrics
 
+# pylint: disable=no-self-use
+
 
 @enum.unique
 class ExerciseColumns(enum.Enum):
@@ -41,7 +43,7 @@ class ExerciseModel(QAbstractTableModel):
 
     def get_row(self, row: int):
         return self._db.execute(
-            f"SELECT * FROM FranklinExercise LIMIT 1 OFFSET ?;", (row,)
+            "SELECT * FROM FranklinExercise LIMIT 1 OFFSET ?;", (row,)
         ).fetchone()
 
     def set_data(self, row: int, column: ExerciseColumns, value: str):
@@ -58,7 +60,7 @@ class ExerciseModel(QAbstractTableModel):
         return self._db.execute("SELECT COUNT (*) FROM FranklinExercise;").fetchone()[0]
 
     # Override
-    def columnCount(self, _parent) -> int:
+    def columnCount(self, __) -> int:
         return len(ExerciseColumns)
 
     # Override
@@ -93,6 +95,7 @@ class ExerciseModel(QAbstractTableModel):
         self._db.execute("INSERT INTO FranklinExercise DEFAULT VALUES;")
         self.endInsertRows()
         self._db.commit()
+        return True
 
     # Override
     def removeRow(self, row: int, parent: QModelIndex = QModelIndex()) -> bool:
@@ -105,6 +108,7 @@ class ExerciseModel(QAbstractTableModel):
         )
         self.endRemoveRows()
         self._db.commit()
+        return True
 
     def _get_value(self, column: ExerciseColumns, row: int) -> str:
         return self._db.execute(
@@ -113,7 +117,8 @@ class ExerciseModel(QAbstractTableModel):
 
     def _set_value(self, column: ExerciseColumns, row: int, value: str):
         self._db.execute(
-            f"UPDATE FranklinExercise SET {column.name} = ? WHERE rowid=(SELECT rowid FROM FranklinExercise LIMIT 1 OFFSET ?);",
+            f"UPDATE FranklinExercise SET {column.name} = ? "
+            "WHERE rowid=(SELECT rowid FROM FranklinExercise LIMIT 1 OFFSET ?);",
             (value, row),
         )
         self._db.commit()
@@ -135,7 +140,8 @@ class ExerciseModel(QAbstractTableModel):
             if role == Qt.DisplayRole:
                 col = self._column.name
                 return self._db.execute(
-                    f"SELECT T.{col} FROM (SELECT DISTINCT {col} FROM FranklinExercise ORDER BY {col}) AS T LIMIT 1 OFFSET ?",
+                    f"SELECT T.{col} FROM (SELECT DISTINCT {col} FROM FranklinExercise "
+                    f"ORDER BY {col}) AS T LIMIT 1 OFFSET ?",
                     (index.row(),),
                 ).fetchone()[0]
             return None

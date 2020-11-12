@@ -16,6 +16,7 @@ appdirs = "^1.4.4"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
+pylint = "^2.6.0"
 
 [tool.poetry.scripts]
 franklin-exercise = "franklin_writing_exercise.__main__:run"

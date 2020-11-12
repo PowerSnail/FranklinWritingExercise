@@ -1,0 +1,5 @@
+[MASTER]
+extension-pkg-whitelist=PyQt5
+ignore-patterns=ui_.*,resources\.py
+disable=missing-function-docstring,missing-module-docstring,missing-class-docstring,invalid-name,no-else-return
+max-line-length=120

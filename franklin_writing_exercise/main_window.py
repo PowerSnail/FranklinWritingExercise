@@ -1,13 +1,14 @@
 import pathlib
 import random
-from PyQt5.QtGui import QColor
 
 import appdirs
 from PyQt5.QtCore import QModelIndex, Qt
 from PyQt5.QtCore import pyqtSlot as slot
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
     QCompleter,
-    QGridLayout, QListWidgetItem,
+    QGridLayout,
+    QListWidgetItem,
     QMainWindow,
     QMessageBox,
     QTabBar,
@@ -27,8 +28,12 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
         data_path = data_dir / "exercises.db"
         self._model = ExerciseModel(str(data_path), parent=self)
 
-        self._author_completer = QCompleter(ExerciseModel.UniqueColumnModel(self._model, ExerciseColumns.Author), self)
-        self._source_completer = QCompleter(ExerciseModel.UniqueColumnModel(self._model, ExerciseColumns.Source), self)
+        self._author_completer = QCompleter(
+            ExerciseModel.UniqueColumnModel(self._model, ExerciseColumns.Author), self
+        )
+        self._source_completer = QCompleter(
+            ExerciseModel.UniqueColumnModel(self._model, ExerciseColumns.Source), self
+        )
 
         self._step_handlers = (
             self._step_take_notes,
@@ -41,8 +46,8 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
 
         self.setupUi(self)
 
-    def setupUi(self, obj):
-        super().setupUi(obj)
+    def setupUi(self, _):
+        super().setupUi(self)
 
         self._editors = (
             (ExerciseColumns.Author, self.edit_author),
@@ -230,7 +235,7 @@ class MainWindow(QMainWindow, ui_main_window.Ui_MainWindow):
 
         for i in range(len(note_lines)):
             item = self.list_widget_jumble.item(i)
-            item.setBackground(self._random_color(item.text()))        
+            item.setBackground(self._random_color(item.text()))
         self.list_widget_jumble.setCurrentRow(-1)
 
     def _get_note_as_lines(self):
