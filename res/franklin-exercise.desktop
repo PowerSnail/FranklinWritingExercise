@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Franklin Writing Exercise
+GenericName=Writing Exercise
+Exec=franklin-exercise
+Icon=franklin-exercise
+Terminal=false
+Type=Application
+Categories=Education
+StartupWMClass=franklin-exercise
+StartupNotify=true
